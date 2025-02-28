@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Discord Activity</title>
+    <style>
+      /* Styling for the on-page console */
+      #error-console {
+        background-color: #222;
+        color: #0f0;
+        font-family: monospace;
+        padding: 10px;
+        margin-top: 20px;
+        height: 150px;
+        overflow-y: scroll;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Discord Activity</h1>
+    <div id="channel-info">Loading channel information...</div>
+    <div id="error-console">Console Output:</div>
+
+    <!-- Module script for Discord SDK -->
+    <script type="module">
+      // Override console.error so that errors are logged to the on-page console as well.
+      const originalConsoleError = console.error;
+      console.error = function(...args) {
+        originalConsoleError.apply(console, args);
+        const errorConsole = document.getElementById('error-console');
+        errorConsole.innerText += "\n" + args.map(arg => typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg).join(' ');
+      };
+
+      // Global error handler for uncaught errors.
+      window.onerror = function(message, source, lineno, colno, error) {
+        const errorConsole = document.getElementById('error-console');
+        errorConsole.innerText += `\nError: ${message} at ${source}:${lineno}:${colno}`;
+        return false;
+      };
+
+      // Import the Discord Embedded App SDK.
+      import { DiscordSDK } from 'https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@1.9.0/+esm';
+      const clientId = '<%= clientId %>';
+
+      (async function() {
+        try {
+          // Initialize the SDK with your client ID.
+          const discordSdk = new DiscordSDK(clientId);
+          await discordSdk.ready();
+
+          // Retrieve channel info.
+          const channelId = discordSdk.channelId;
+          // const channel = await discordSdk.commands.getChannel({ channel_id: channelId });
+          document.getElementById('channel-info').innerText = 'Channel ID: ' + channelId;
+        } catch (error) {
+          console.error('Error initializing Discord SDK:', error);
+          document.getElementById('channel-info').innerText = "Error loading activity.";
+        }
+      })();
+    </script>
+  </body>
+</html>
